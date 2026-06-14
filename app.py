@@ -19,7 +19,7 @@ from google import genai
 
 geolocator = Nominatim(user_agent="furever_app")
 
-
+API_KEY = st.secrets["API_KEY"]
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
