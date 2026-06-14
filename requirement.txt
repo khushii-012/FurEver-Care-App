@@ -1,0 +1,4 @@
+streamlit
+folium
+google-genai
+python-dotenv
