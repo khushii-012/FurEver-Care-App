@@ -171,7 +171,7 @@ menu = st.sidebar.selectbox(
         "Vaccination Reminder",
         "Emergency Rescue"
     ],
-    key="main_menu"
+    key="sidebar_menu"
 )
 
 # ---------------- HOME ----------------
