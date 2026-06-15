@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import streamlit as st
 import pandas as pd
-import folium
+#import folium
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim 
 from utils.db import create_table, add_pet, get_pets
