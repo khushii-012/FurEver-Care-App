@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 def get_nearby_vets(location):
     # MVP static data (later we connect API / Google Maps)
     return [
@@ -13,7 +12,7 @@ def get_nearby_ngos(location):
         {"name": "Animal Rescue Trust", "contact": "9112233445", "distance": "1.5 km"},
         {"name": "Stray Care Foundation", "contact": "9001122334", "distance": "3 km"},
         {"name": "Paw Protect NGO", "contact": "8899001122", "distance": "5 km"}
-=======
+
 def get_nearby_vets(location):
     # MVP static data (later we connect API / Google Maps)
     return [
