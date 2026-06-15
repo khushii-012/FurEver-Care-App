@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import sqlite3
 
 DB_PATH = "data/pets.db"
@@ -104,5 +103,4 @@ def get_pets():
     rows = cursor.fetchall()
 
     conn.close()
->>>>>>> 79aed5a (FurEver Care project)
     return rows
