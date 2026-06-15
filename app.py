@@ -10,7 +10,7 @@ from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 
 from utils.db import create_table, add_pet, get_pets
-<<<<<<< HEAD
+
 from utils.ai import analyze_pet_health, generate_food_plan, analyze_rescue_case, analyze_rescue_image
 from utils.rescue_network import get_nearby_vets, get_nearby_ngos
 from utils.location_service import find_nearby_help
@@ -20,7 +20,7 @@ create_table()
 geolocator = Nominatim(user_agent="furever_app")
 
 # ---------------- PAGE CONFIG ----------------
-=======
+
 from utils.ai import (
     analyze_pet_health,
     generate_food_plan,
@@ -31,14 +31,14 @@ from utils.ai import (
 create_table()
 
 # ---------------- CONFIG ----------------
->>>>>>> c7549e4038f92fce7f94fcb34c3e9222814f1756
+
 st.set_page_config(
     page_title="FurEver Care 🐾",
     page_icon="🐶",
     layout="wide"
 )
 
-<<<<<<< HEAD
+
 API_KEY = st.secrets["API_KEY"]
 
 # ---------------- USER LOCATION (FALLBACK) ----------------
@@ -143,7 +143,7 @@ elif menu == "Food Recommendation":
             st.write(result)
         else:
             st.warning("Enter breed")
-=======
+
 geolocator = Nominatim(user_agent="furever_app")
 
 API_KEY = st.secrets.get("API_KEY", None)
@@ -157,7 +157,6 @@ if "map_lon" not in st.session_state:
 
 if "reports" not in st.session_state:
     st.session_state["reports"] = []
->>>>>>> c7549e4038f92fce7f94fcb34c3e9222814f1756
 
 # ---------------- SIDEBAR ----------------
 st.sidebar.title("🐾 FurEver Care")
@@ -232,7 +231,6 @@ elif menu == "Vaccination Reminder":
 
 # ---------------- RESCUE ----------------
 elif menu == "Emergency Rescue":
-<<<<<<< HEAD
 
     st.title("🚑 Emergency Animal Rescue")
 
@@ -307,7 +305,7 @@ elif menu == "Emergency Rescue":
         st.warning("Vet data not available")
 
     st_folium(m, width=900, height=500)
-=======
+
     st.title("🚑 Emergency Rescue")
 
     image = st.file_uploader("Upload image", type=["jpg", "png", "jpeg"])
@@ -354,4 +352,4 @@ for r in st.session_state["reports"]:
     ).add_to(m)
 
 st_folium(m, width=900, height=500)
->>>>>>> c7549e4038f92fce7f94fcb34c3e9222814f1756
+
