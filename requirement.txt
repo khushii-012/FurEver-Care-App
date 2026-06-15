@@ -1,6 +1,7 @@
 streamlit
 folium
 google-genai
+streamlit-folium
 python-dotenv
 pandas
 requests
