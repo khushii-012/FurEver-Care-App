@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
 
@@ -44,7 +43,7 @@ def find_nearby_help(location):
     # sort by closest first
     results.sort(key=lambda x: x["distance"])
 
-=======
+
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
 
@@ -90,5 +89,4 @@ def find_nearby_help(location):
     # sort by closest first
     results.sort(key=lambda x: x["distance"])
 
->>>>>>> 79aed5a (FurEver Care project)
     return results

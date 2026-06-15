@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import requests
 
 def get_nearby_vets(lat, lon):
@@ -29,3 +30,35 @@ def get_nearby_vets(lat, lon):
     except Exception as e:
         print("Error fetching vets:", e)
         return []
+=======
+def get_nearby_vets(location):
+    # MVP static data (later we connect API / Google Maps)
+    return [
+        {"name": "City Pet Clinic", "contact": "9876543210", "distance": "2 km"},
+        {"name": "Animal Care Hospital", "contact": "9123456780", "distance": "3.5 km"},
+        {"name": "Paws Veterinary Center", "contact": "9988776655", "distance": "4 km"}
+    ]
+
+
+def get_nearby_ngos(location):
+    return [
+        {"name": "Animal Rescue Trust", "contact": "9112233445", "distance": "1.5 km"},
+        {"name": "Stray Care Foundation", "contact": "9001122334", "distance": "3 km"},
+        {"name": "Paw Protect NGO", "contact": "8899001122", "distance": "5 km"}
+    ]
+def get_nearby_vets(location):
+    # MVP static data (later we connect API / Google Maps)
+    return [
+        {"name": "City Pet Clinic", "contact": "9876543210", "distance": "2 km"},
+        {"name": "Animal Care Hospital", "contact": "9123456780", "distance": "3.5 km"},
+        {"name": "Paws Veterinary Center", "contact": "9988776655", "distance": "4 km"}
+    ]
+
+
+def get_nearby_ngos(location):
+    return [
+        {"name": "Animal Rescue Trust", "contact": "9112233445", "distance": "1.5 km"},
+        {"name": "Stray Care Foundation", "contact": "9001122334", "distance": "3 km"},
+        {"name": "Paw Protect NGO", "contact": "8899001122", "distance": "5 km"}
+    ]
+>>>>>>> c7549e4038f92fce7f94fcb34c3e9222814f1756
