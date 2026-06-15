@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import requests
 
 def get_nearby_vets(lat, lon):
@@ -30,7 +29,7 @@ def get_nearby_vets(lat, lon):
     except Exception as e:
         print("Error fetching vets:", e)
         return []
-=======
+
 def get_nearby_vets(location):
     # MVP static data (later we connect API / Google Maps)
     return [
@@ -61,4 +60,4 @@ def get_nearby_ngos(location):
         {"name": "Stray Care Foundation", "contact": "9001122334", "distance": "3 km"},
         {"name": "Paw Protect NGO", "contact": "8899001122", "distance": "5 km"}
     ]
->>>>>>> c7549e4038f92fce7f94fcb34c3e9222814f1756
+
