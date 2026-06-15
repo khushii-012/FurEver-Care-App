@@ -50,7 +50,7 @@ def get_pets():
     rows = cursor.fetchall()
 
     conn.close()
-=======
+
 import sqlite3
 
 DB_PATH = "data/pets.db"
