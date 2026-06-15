@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -442,4 +441,4 @@ for r in st.session_state["reports"]:
     ).add_to(m)
 
 st_folium(m, width=900, height=500)
->>>>>>> 79aed5a (FurEver Care project)
+
