@@ -118,7 +118,7 @@ elif menu == "Health Assistant":
 
     symptoms = st.text_area("Enter Symptoms")
 
-    if st.button("Analyze", key="health_btn"):
+    if st.button("Analyze", key="health_btn2"):
         if symptoms.strip():
             with st.spinner("Analyzing..."):
                 result = analyze_pet_health(symptoms)
@@ -202,7 +202,7 @@ elif menu == "Health Assistant":
 
     symptoms = st.text_area("Enter symptoms")
 
-    if st.button("Analyze", key="health_btn"):
+    if st.button("Analyze", key="health_btn1"):
         if symptoms:
             result = analyze_pet_health(symptoms)
             st.write(result)
