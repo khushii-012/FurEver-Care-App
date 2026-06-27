@@ -215,6 +215,24 @@ def section_title(text):
     </div>
     """, unsafe_allow_html=True)
 
+def back_nav(current_page):
+    """Show a top navigation bar with back to home + quick links"""
+    st.markdown("<div style='margin-bottom:4px'></div>", unsafe_allow_html=True)
+    cols = st.columns([1, 1, 1, 1, 4])
+    with cols[0]:
+        if st.button("🏠 Home", key=f"back_home_{current_page}", use_container_width=True):
+            go_to("🏠 Home")
+    with cols[1]:
+        if st.button("🐶 Pets", key=f"back_pets_{current_page}", use_container_width=True):
+            go_to("🐶 Pet Profile")
+    with cols[2]:
+        if st.button("🚨 Rescue", key=f"back_rescue_{current_page}", use_container_width=True):
+            go_to("🚨 Emergency Rescue")
+    with cols[3]:
+        if st.button("🛒 Shop", key=f"back_shop_{current_page}", use_container_width=True):
+            go_to("🛒 Pet Shop")
+    st.markdown("<hr style='border-color:#2A1F4A;margin:10px 0 16px'>", unsafe_allow_html=True)
+
 # ---------------- SESSION STATE ----------------
 if "map_lat" not in st.session_state:
     st.session_state.map_lat = 20.5937
@@ -244,13 +262,24 @@ MENU_OPTIONS = [
     "🛒 Pet Shop"
 ]
 
-default_index = 0
-if "menu_choice" in st.session_state:
-    if st.session_state["menu_choice"] in MENU_OPTIONS:
-        default_index = MENU_OPTIONS.index(st.session_state["menu_choice"])
-    del st.session_state["menu_choice"]
+# Navigation via buttons — set active_menu, sidebar follows
+if "active_menu" not in st.session_state:
+    st.session_state["active_menu"] = "🏠 Home"
 
-menu = st.sidebar.selectbox("🐾 Navigate", MENU_OPTIONS, index=default_index)
+def go_to(page):
+    st.session_state["active_menu"] = page
+
+# Sidebar selectbox — stays in sync with active_menu
+selected = st.sidebar.selectbox(
+    "🐾 Navigate",
+    MENU_OPTIONS,
+    index=MENU_OPTIONS.index(st.session_state["active_menu"])
+)
+# If user manually clicks sidebar, update active_menu
+if selected != st.session_state["active_menu"]:
+    st.session_state["active_menu"] = selected
+
+menu = st.session_state["active_menu"]
 
 st.sidebar.markdown("""
 <hr style="border-color:#2A1F4A;margin:16px 0 12px;">
@@ -297,19 +326,16 @@ if menu == "🏠 Home":
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown(feature_card("🚑","Emergency Rescue","Report & get help fast","#FF3CAC"), unsafe_allow_html=True)
-        if st.button("🚑 Go to Rescue", key="home_rescue", use_container_width=True):
-            st.session_state["menu_choice"] = "🚨 Emergency Rescue"
-            st.rerun()
+        if st.button("🚑 Emergency Rescue", key="home_rescue", use_container_width=True):
+            go_to("🚨 Emergency Rescue")
     with c2:
         st.markdown(feature_card("🔍","Missing Pet","Find your lost baby","#FFB300"), unsafe_allow_html=True)
-        if st.button("🔍 Go to Missing Pet", key="home_missing", use_container_width=True):
-            st.session_state["menu_choice"] = "🔍 Missing Pet"
-            st.rerun()
+        if st.button("🔍 Missing Pet", key="home_missing", use_container_width=True):
+            go_to("🔍 Missing Pet")
     with c3:
         st.markdown(feature_card("🛒","Pet Shop","Food · toys · treats","#00C853"), unsafe_allow_html=True)
-        if st.button("🛒 Go to Shop", key="home_shop", use_container_width=True):
-            st.session_state["menu_choice"] = "🛒 Pet Shop"
-            st.rerun()
+        if st.button("🛒 Pet Shop", key="home_shop", use_container_width=True):
+            go_to("🛒 Pet Shop")
 
     st.markdown("<div style='margin-top:6px'></div>", unsafe_allow_html=True)
 
@@ -317,19 +343,16 @@ if menu == "🏠 Home":
     c4, c5, c6 = st.columns(3)
     with c4:
         st.markdown(feature_card("🩺","AI Health Check","Symptoms → diagnosis","#7B2FFF"), unsafe_allow_html=True)
-        if st.button("🩺 Go to Health", key="home_health", use_container_width=True):
-            st.session_state["menu_choice"] = "🧠 Health Assistant"
-            st.rerun()
+        if st.button("🩺 Health Check", key="home_health", use_container_width=True):
+            go_to("🧠 Health Assistant")
     with c5:
         st.markdown(feature_card("🍗","Food Planner","Smart diet plan","#00F5FF"), unsafe_allow_html=True)
-        if st.button("🍗 Go to Food", key="home_food", use_container_width=True):
-            st.session_state["menu_choice"] = "🍗 Food Planner"
-            st.rerun()
+        if st.button("🍗 Food Planner", key="home_food", use_container_width=True):
+            go_to("🍗 Food Planner")
     with c6:
         st.markdown(feature_card("💊","Vaccination","Never miss a shot","#FF7000"), unsafe_allow_html=True)
-        if st.button("💉 Go to Vaccination", key="home_vax", use_container_width=True):
-            st.session_state["menu_choice"] = "💉 Vaccination"
-            st.rerun()
+        if st.button("💉 Vaccination", key="home_vax", use_container_width=True):
+            go_to("💉 Vaccination")
 
     if pets:
         section_title("🐶 My Fur Babies")
@@ -381,6 +404,7 @@ if menu == "🏠 Home":
 # ================================================================
 elif menu == "🐶 Pet Profile":
     hero_banner("Pet Profile", "Add and manage your fur babies 🐾", "🐶")
+    back_nav("petprofile")
 
     tab1, tab2 = st.tabs(["➕ Add Pet", "📋 My Pets"])
 
@@ -403,10 +427,8 @@ elif menu == "🐶 Pet Profile":
                 photo_bytes = photo.read() if photo else None
                 add_pet(name, age, breed, weight, photo_bytes, species)
                 st.success(f"✅ {name} added successfully!")
-                st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
                 if st.button("🏠 Back to Home", key="back_home_pet"):
-                    st.session_state["menu_choice"] = "🏠 Home"
-                    st.rerun()
+                    go_to("🏠 Home")
             else:
                 st.warning("Please fill in name and breed.")
 
@@ -457,6 +479,7 @@ elif menu == "🐶 Pet Profile":
 # ================================================================
 elif menu == "🧠 Health Assistant":
     hero_banner("AI Health Assistant", "Describe symptoms — AI will analyze 🩺", "🧠")
+    back_nav("health")
 
     symptoms = st.text_area("Describe your pet's symptoms",
         placeholder="e.g. My dog is vomiting, not eating since 2 days, seems lethargic...",
@@ -481,6 +504,7 @@ elif menu == "🧠 Health Assistant":
 # ================================================================
 elif menu == "🍗 Food Planner":
     hero_banner("AI Food Planner", "Get a personalized diet plan for your pet 🥗", "🍗")
+    back_nav("food")
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -508,6 +532,7 @@ elif menu == "🍗 Food Planner":
 # ================================================================
 elif menu == "💉 Vaccination":
     hero_banner("Vaccination Tracker", "Never miss your pet's important shots 💉", "💉")
+    back_nav("vax")
 
     tab1, tab2 = st.tabs(["➕ Add Reminder", "📋 All Reminders"])
 
@@ -578,6 +603,7 @@ elif menu == "💉 Vaccination":
 # ================================================================
 elif menu == "🚨 Emergency Rescue":
     hero_banner("Emergency Animal Rescue", "Report injured animals — get help immediately 🚑", "🚨")
+    back_nav("rescue")
 
     col1, col2 = st.columns([1, 1])
     with col1:
@@ -692,6 +718,7 @@ elif menu == "🚨 Emergency Rescue":
 # ================================================================
 elif menu == "🔍 Missing Pet":
     hero_banner("Missing Pet Finder", "Report a lost pet or help find someone's fur baby 🔍", "🔍")
+    back_nav("missing")
 
     tab1, tab2 = st.tabs(["📢 Report Missing Pet", "🗺️ All Missing Pets"])
 
@@ -779,6 +806,7 @@ elif menu == "🔍 Missing Pet":
 # ================================================================
 elif menu == "🛒 Pet Shop":
     hero_banner("Mini Pet Shop", "Everything your fur baby needs 🛒", "🛒")
+    back_nav("shop")
 
     PRODUCTS = [
         {"name": "Royal Canin Adult Dog Food", "category": "Food 🍗", "price": 1299, "emoji": "🥩", "desc": "Complete nutrition for adult dogs, 3kg pack", "tag": "Bestseller"},
