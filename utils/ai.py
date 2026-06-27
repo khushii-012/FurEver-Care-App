@@ -1,15 +1,42 @@
-from google import genai
-from google.genai import types
 import os
+import requests
+from dotenv import load_dotenv
 
-# ✅ FIX 1: API key seedha env se lo — string "api_key=API_KEY" nahi
-API_KEY = os.getenv("GEMINI_API_KEY")
+load_dotenv()
+
+def get_api_key():
+    key = os.getenv("OPENROUTER_API_KEY")
+    if key:
+        return key
+    try:
+        import streamlit as st
+        return st.secrets["OPENROUTER_API_KEY"]
+    except:
+        return None
+
+API_KEY = get_api_key()
+API_URL = "https://openrouter.ai/api/v1/chat/completions"
+MODEL   = "google/gemini-2.0-flash-exp:free"  # free Gemini on OpenRouter
+
+def call_ai(prompt):
+    try:
+        headers = {
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json"
+        }
+        body = {
+            "model": MODEL,
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        response = requests.post(API_URL, headers=headers, json=body, timeout=30)
+        data = response.json()
+        return data["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f"❌ AI call failed: {str(e)}"
 
 
 def analyze_pet_health(symptoms):
-    try:
-        client = genai.Client(api_key=API_KEY)
-        prompt = f"""
+    prompt = f"""
 You are a veterinary AI assistant.
 
 Analyze these pet symptoms:
@@ -21,20 +48,11 @@ Give:
 3. Care advice
 4. Whether vet visit is needed
 """
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
-        return response.text
-
-    except Exception as e:
-        return f"❌ AI analysis failed: {str(e)}\n\nPlease check your GEMINI_API_KEY in Streamlit secrets."
+    return call_ai(prompt)
 
 
 def generate_food_plan(breed, age, weight):
-    try:
-        client = genai.Client(api_key=API_KEY)
-        prompt = f"""
+    prompt = f"""
 You are a veterinary nutrition expert AI.
 
 Create a detailed food plan for a pet with:
@@ -49,20 +67,11 @@ Give:
 4. Foods to avoid
 5. Health tips
 """
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
-        return response.text
-
-    except Exception as e:
-        return f"❌ Food plan generation failed: {str(e)}"
+    return call_ai(prompt)
 
 
 def analyze_rescue_case(description, location):
-    try:
-        client = genai.Client(api_key=API_KEY)
-        prompt = f"""
+    prompt = f"""
 You are an emergency animal rescue AI assistant.
 
 Analyze this situation:
@@ -76,44 +85,22 @@ Provide:
 4. Should NGO / Vet be contacted urgently (Yes/No)
 5. Short rescue advice
 """
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
-        return response.text
-
-    except Exception as e:
-        return f"❌ Rescue analysis failed: {str(e)}"
+    return call_ai(prompt)
 
 
 def analyze_rescue_image(image, description, location):
-    try:
-        client = genai.Client(api_key=API_KEY)
-        prompt = f"""
+    # OpenRouter free tier doesn't support image — fallback to text
+    prompt = f"""
 You are an emergency animal rescue AI.
 
 Location: {location}
 Description: {description}
 
-Analyze the animal in the image and provide:
-1. Injury severity
-2. Animal condition
-3. Rescue action needed
-4. Priority level (Low / Medium / Critical)
+Based on the description, provide:
+1. Injury severity (Low / Medium / Critical)
+2. Animal condition assessment
+3. Immediate rescue action needed
+4. Priority level
+5. First aid tips
 """
-        image_bytes = image.read()
-
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[
-                prompt,
-                types.Part.from_bytes(
-                    data=image_bytes,
-                    mime_type=image.type
-                )
-            ]
-        )
-        return response.text
-
-    except Exception as e:
-        return f"❌ Image analysis failed: {str(e)}"
+    return call_ai(prompt)
