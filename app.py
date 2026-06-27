@@ -233,19 +233,24 @@ st.sidebar.markdown("""
 <hr style="border-color:#2A1F4A;margin-bottom:16px;">
 """, unsafe_allow_html=True)
 
-menu = st.sidebar.selectbox(
-    "🐾 Navigate",
-    [
-        "🏠 Home",
-        "🐶 Pet Profile",
-        "🧠 Health Assistant",
-        "🍗 Food Planner",
-        "💉 Vaccination",
-        "🚨 Emergency Rescue",
-        "🔍 Missing Pet",
-        "🛒 Pet Shop"
-    ]
-)
+MENU_OPTIONS = [
+    "🏠 Home",
+    "🐶 Pet Profile",
+    "🧠 Health Assistant",
+    "🍗 Food Planner",
+    "💉 Vaccination",
+    "🚨 Emergency Rescue",
+    "🔍 Missing Pet",
+    "🛒 Pet Shop"
+]
+
+default_index = 0
+if "menu_choice" in st.session_state:
+    if st.session_state["menu_choice"] in MENU_OPTIONS:
+        default_index = MENU_OPTIONS.index(st.session_state["menu_choice"])
+    del st.session_state["menu_choice"]
+
+menu = st.sidebar.selectbox("🐾 Navigate", MENU_OPTIONS, index=default_index)
 
 st.sidebar.markdown("""
 <hr style="border-color:#2A1F4A;margin:16px 0 12px;">
@@ -287,15 +292,44 @@ if menu == "🏠 Home":
     ])
 
     section_title("✨ What do you need today?")
+
+    # Row 1
     c1, c2, c3 = st.columns(3)
-    c1.markdown(feature_card("🚑","Emergency Rescue","Report & get help fast","#FF3CAC"), unsafe_allow_html=True)
-    c2.markdown(feature_card("🔍","Missing Pet","Find your lost baby","#FFB300"), unsafe_allow_html=True)
-    c3.markdown(feature_card("🛒","Pet Shop","Food · toys · treats","#00C853"), unsafe_allow_html=True)
-    st.markdown("<div style='margin-top:10px'></div>", unsafe_allow_html=True)
+    with c1:
+        st.markdown(feature_card("🚑","Emergency Rescue","Report & get help fast","#FF3CAC"), unsafe_allow_html=True)
+        if st.button("🚑 Go to Rescue", key="home_rescue", use_container_width=True):
+            st.session_state["menu_choice"] = "🚨 Emergency Rescue"
+            st.rerun()
+    with c2:
+        st.markdown(feature_card("🔍","Missing Pet","Find your lost baby","#FFB300"), unsafe_allow_html=True)
+        if st.button("🔍 Go to Missing Pet", key="home_missing", use_container_width=True):
+            st.session_state["menu_choice"] = "🔍 Missing Pet"
+            st.rerun()
+    with c3:
+        st.markdown(feature_card("🛒","Pet Shop","Food · toys · treats","#00C853"), unsafe_allow_html=True)
+        if st.button("🛒 Go to Shop", key="home_shop", use_container_width=True):
+            st.session_state["menu_choice"] = "🛒 Pet Shop"
+            st.rerun()
+
+    st.markdown("<div style='margin-top:6px'></div>", unsafe_allow_html=True)
+
+    # Row 2
     c4, c5, c6 = st.columns(3)
-    c4.markdown(feature_card("🩺","AI Health Check","Symptoms → diagnosis","#7B2FFF"), unsafe_allow_html=True)
-    c5.markdown(feature_card("🍗","Food Planner","Smart diet plan","#00F5FF"), unsafe_allow_html=True)
-    c6.markdown(feature_card("💊","Vaccination","Never miss a shot","#FF7000"), unsafe_allow_html=True)
+    with c4:
+        st.markdown(feature_card("🩺","AI Health Check","Symptoms → diagnosis","#7B2FFF"), unsafe_allow_html=True)
+        if st.button("🩺 Go to Health", key="home_health", use_container_width=True):
+            st.session_state["menu_choice"] = "🧠 Health Assistant"
+            st.rerun()
+    with c5:
+        st.markdown(feature_card("🍗","Food Planner","Smart diet plan","#00F5FF"), unsafe_allow_html=True)
+        if st.button("🍗 Go to Food", key="home_food", use_container_width=True):
+            st.session_state["menu_choice"] = "🍗 Food Planner"
+            st.rerun()
+    with c6:
+        st.markdown(feature_card("💊","Vaccination","Never miss a shot","#FF7000"), unsafe_allow_html=True)
+        if st.button("💉 Go to Vaccination", key="home_vax", use_container_width=True):
+            st.session_state["menu_choice"] = "💉 Vaccination"
+            st.rerun()
 
     if pets:
         section_title("🐶 My Fur Babies")
@@ -369,6 +403,10 @@ elif menu == "🐶 Pet Profile":
                 photo_bytes = photo.read() if photo else None
                 add_pet(name, age, breed, weight, photo_bytes, species)
                 st.success(f"✅ {name} added successfully!")
+                st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
+                if st.button("🏠 Back to Home", key="back_home_pet"):
+                    st.session_state["menu_choice"] = "🏠 Home"
+                    st.rerun()
             else:
                 st.warning("Please fill in name and breed.")
 
