@@ -602,116 +602,229 @@ elif menu == "💉 Vaccination":
 #  EMERGENCY RESCUE
 # ================================================================
 elif menu == "🚨 Emergency Rescue":
+    from utils.ai import generate_rescue_report
+    import json
+
     hero_banner("Emergency Animal Rescue", "Report injured animals — get help immediately 🚑", "🚨")
     back_nav("rescue")
 
+    # ---- FORM ----
     col1, col2 = st.columns([1, 1])
     with col1:
         image       = st.file_uploader("📷 Upload Animal Photo (optional)", type=["jpg","jpeg","png"])
-        location    = st.text_input("📍 Location", placeholder="e.g. Andheri West, Mumbai")
+        location    = st.text_input("📍 Location", placeholder="e.g. VR Mall Nagpur")
         description = st.text_area("📝 Describe the Situation",
-            placeholder="e.g. Dog hit by car, bleeding from leg, near the traffic signal...", height=100)
+            placeholder="e.g. Dog hit by car, bleeding from leg...", height=100)
 
         if st.button("🚨 Send Rescue Alert"):
             if not location.strip() or not description.strip():
                 st.warning("Please fill in location and description.")
             else:
-                with st.spinner("Analyzing situation with AI..."):
+                with st.spinner("🧠 AI analyzing rescue situation..."):
                     if image:
                         result = analyze_rescue_image(image, description, location)
                     else:
                         result = analyze_rescue_case(description, location)
 
-                # Extract severity from result
+                # Extract severity
                 severity = "Medium"
-                result_lower = result.lower()
-                if "critical" in result_lower:
-                    severity = "Critical"
-                elif "high" in result_lower:
-                    severity = "High"
-                elif "low" in result_lower:
-                    severity = "Low"
+                rl = result.lower()
+                if "critical" in rl: severity = "Critical"
+                elif "high" in rl:   severity = "High"
+                elif "low" in rl:    severity = "Low"
 
-                st.markdown(f"""
-                <div style="background:#1E1235;border:1px solid #FF3CAC44;border-radius:16px;padding:18px;margin-top:12px;">
-                    <div style="color:#FF3CAC;font-size:14px;font-weight:800;margin-bottom:10px;">🧠 AI Rescue Analysis</div>
-                """, unsafe_allow_html=True)
-                st.write(result)
-                st.markdown("</div>", unsafe_allow_html=True)
+                # Store in session
+                st.session_state["rescue_result"]   = result
+                st.session_state["rescue_severity"] = severity
+                st.session_state["rescue_location"] = location
+                st.session_state["rescue_desc"]     = description
 
-                if image:
-                    st.image(image, caption="Uploaded Photo", width=300)
-
+                # Geocode location
                 lat, lon = get_coordinates(location)
                 if lat is None:
-                    lat, lon = st.session_state.map_lat, st.session_state.map_lon
+                    lat, lon = 21.1458, 79.0882  # Nagpur fallback
                     st.warning("⚠️ Could not pinpoint exact location — using approximate.")
 
                 st.session_state.reports.append({"lat": lat, "lon": lon, "description": description})
                 st.session_state.map_lat = lat
                 st.session_state.map_lon = lon
 
+                # Fetch real vets from OSM
+                with st.spinner("🗺️ Finding nearby vet hospitals..."):
+                    try:
+                        import requests as req
+                        query = f"""
+[out:json];
+(
+  node["amenity"="veterinary"](around:5000,{lat},{lon});
+  node["amenity"="animal_shelter"](around:5000,{lat},{lon});
+);
+out body;
+"""
+                        osm_resp = req.get(
+                            "https://overpass-api.de/api/interpreter",
+                            params={"data": query}, timeout=15
+                        )
+                        osm_data = osm_resp.json()
+                        real_vets = []
+                        for el in osm_data.get("elements", []):
+                            tags = el.get("tags", {})
+                            real_vets.append({
+                                "name": tags.get("name", "Vet Clinic"),
+                                "lat": el.get("lat"),
+                                "lon": el.get("lon"),
+                                "phone": tags.get("phone", "N/A"),
+                                "type": tags.get("amenity", "veterinary")
+                            })
+                        st.session_state["real_vets"] = real_vets
+                    except:
+                        st.session_state["real_vets"] = []
+
                 add_rescue_report(location, description, severity, lat, lon, str(date.today()))
-                st.success("✅ Rescue report submitted! Nearby help notified.")
+                st.success("✅ Rescue report submitted!")
 
     with col2:
-        if st.session_state.reports:
-            lat = st.session_state.map_lat
-            lon = st.session_state.map_lon
+        # Show AI result
+        if "rescue_result" in st.session_state:
+            sev = st.session_state["rescue_severity"]
+            sev_color = {"Critical":"#FF3CAC","High":"#FF7000","Medium":"#FFB300","Low":"#00C853"}.get(sev,"#8070B0")
 
-            st.markdown("""
-            <div style="color:white;font-size:15px;font-weight:800;margin-bottom:10px;">🏥 Nearby Help</div>
+            st.markdown(f"""
+            <div style="background:#1E1235;border:1px solid {sev_color}55;border-radius:16px;padding:16px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <div style="color:{sev_color};font-size:14px;font-weight:800;">🧠 AI Rescue Analysis</div>
+                    <span style="background:{sev_color}22;color:{sev_color};border:1px solid {sev_color}44;
+                                 font-size:11px;padding:3px 12px;border-radius:20px;font-weight:700;">{sev}</span>
+                </div>
+            </div>
             """, unsafe_allow_html=True)
+            st.write(st.session_state["rescue_result"])
 
+            # ---- DOWNLOAD REPORT BUTTON ----
+            st.markdown("<div style='margin-top:12px'></div>", unsafe_allow_html=True)
+            if st.button("📄 Generate & Download Report"):
+                with st.spinner("Generating rescue report..."):
+                    report_text = generate_rescue_report(
+                        st.session_state["rescue_desc"],
+                        st.session_state["rescue_location"],
+                        st.session_state["rescue_result"]
+                    )
+                st.download_button(
+                    label="⬇️ Download Report (.txt)",
+                    data=report_text,
+                    file_name=f"rescue_report_{date.today()}.txt",
+                    mime="text/plain"
+                )
+
+    # ---- NEARBY HELP ----
+    if st.session_state.reports:
+        section_title("🏥 Nearby Vet Hospitals & NGOs")
+        real_vets = st.session_state.get("real_vets", [])
+
+        if real_vets:
             v_col, n_col = st.columns(2)
             with v_col:
-                st.markdown('<div style="color:#00F5FF;font-size:13px;font-weight:700;margin-bottom:6px;">🏥 Vets</div>', unsafe_allow_html=True)
-                vets = get_nearby_vets(lat, lon)
-                for v in vets[:3]:
+                st.markdown('<div style="color:#00F5FF;font-size:13px;font-weight:700;margin-bottom:8px;">🏥 Real Vet Hospitals Nearby</div>', unsafe_allow_html=True)
+                for v in real_vets[:5]:
                     st.markdown(f"""
-                    <div style="background:#1E1235;border:1px solid #00F5FF33;border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:12px;">
-                        <div style="color:white;font-weight:700;">📍 {v['name']}</div>
-                        <div style="color:#6050A0;">📞 {v.get('contact','N/A')}</div>
+                    <div style="background:#1E1235;border:1px solid #00F5FF33;border-radius:10px;padding:10px 12px;margin-bottom:6px;">
+                        <div style="color:white;font-weight:700;font-size:13px;">📍 {v['name']}</div>
+                        <div style="color:#6050A0;font-size:11px;">📞 {v.get('phone','N/A')}</div>
                     </div>
                     """, unsafe_allow_html=True)
-
             with n_col:
-                st.markdown('<div style="color:#FF3CAC;font-size:13px;font-weight:700;margin-bottom:6px;">🤝 NGOs</div>', unsafe_allow_html=True)
-                ngos = get_nearby_ngos(lat, lon)
-                for n in ngos[:3]:
+                st.markdown('<div style="color:#FF3CAC;font-size:13px;font-weight:700;margin-bottom:8px;">🤝 NGOs</div>', unsafe_allow_html=True)
+                ngos = get_nearby_ngos(st.session_state.map_lat, st.session_state.map_lon)
+                for n in ngos[:5]:
                     st.markdown(f"""
-                    <div style="background:#1E1235;border:1px solid #FF3CAC33;border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:12px;">
+                    <div style="background:#1E1235;border:1px solid #FF3CAC33;border-radius:10px;padding:10px 12px;margin-bottom:6px;">
+                        <div style="color:white;font-weight:700;font-size:13px;">📍 {n['name']}</div>
+                        <div style="color:#6050A0;font-size:11px;">📞 {n.get('contact','N/A')}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+        else:
+            # fallback static
+            v_col, n_col = st.columns(2)
+            with v_col:
+                st.markdown('<div style="color:#00F5FF;font-size:13px;font-weight:700;margin-bottom:8px;">🏥 Nearby Vets</div>', unsafe_allow_html=True)
+                for v in get_nearby_vets(st.session_state.map_lat, st.session_state.map_lon)[:3]:
+                    st.markdown(f"""
+                    <div style="background:#1E1235;border:1px solid #00F5FF33;border-radius:10px;padding:10px 12px;margin-bottom:6px;">
+                        <div style="color:white;font-weight:700;">📍 {v['name']}</div>
+                        <div style="color:#6050A0;font-size:11px;">📞 {v.get('contact','N/A')}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            with n_col:
+                st.markdown('<div style="color:#FF3CAC;font-size:13px;font-weight:700;margin-bottom:8px;">🤝 NGOs</div>', unsafe_allow_html=True)
+                for n in get_nearby_ngos(st.session_state.map_lat, st.session_state.map_lon)[:3]:
+                    st.markdown(f"""
+                    <div style="background:#1E1235;border:1px solid #FF3CAC33;border-radius:10px;padding:10px 12px;margin-bottom:6px;">
                         <div style="color:white;font-weight:700;">📍 {n['name']}</div>
-                        <div style="color:#6050A0;">📞 {n.get('contact','N/A')}</div>
+                        <div style="color:#6050A0;font-size:11px;">📞 {n.get('contact','N/A')}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
-    # Map
+    # ---- MAP with location search + zoom ----
     section_title("🗺️ Live Rescue Map")
+
+    map_search = st.text_input("🔍 Search location on map", placeholder="e.g. VR Mall Nagpur",
+                                key="map_search_input")
+    if st.button("📍 Find on Map", key="map_search_btn"):
+        slat, slon = get_coordinates(map_search)
+        if slat:
+            st.session_state.map_lat = slat
+            st.session_state.map_lon = slon
+            st.success(f"✅ Found: {map_search}")
+        else:
+            st.warning("Location not found. Try being more specific.")
+
+    # Build map
+    zoom = 15 if st.session_state.reports else 12
     m = folium.Map(
         location=[st.session_state.map_lat, st.session_state.map_lon],
-        zoom_start=13,
+        zoom_start=zoom,
         tiles="CartoDB dark_matter"
     )
+
+    # Red markers — rescue reports
     for r in st.session_state.reports:
         folium.Marker(
             [r["lat"], r["lon"]],
             popup=folium.Popup(r["description"], max_width=200),
+            tooltip="🚨 Rescue Report",
             icon=folium.Icon(color="red", icon="exclamation-sign", prefix="glyphicon")
         ).add_to(m)
+
+    # Green markers — real OSM vets
+    real_vets = st.session_state.get("real_vets", [])
+    for v in real_vets:
+        if v.get("lat") and v.get("lon"):
+            folium.Marker(
+                [v["lat"], v["lon"]],
+                popup=folium.Popup(f"🏥 {v['name']}<br>📞 {v.get('phone','N/A')}", max_width=200),
+                tooltip=f"🏥 {v['name']}",
+                icon=folium.Icon(color="green", icon="plus-sign", prefix="glyphicon")
+            ).add_to(m)
+
+    # Blue circle — search radius
     if st.session_state.reports:
-        try:
-            vets = get_nearby_vets(st.session_state.map_lat, st.session_state.map_lon)
-            for v in vets:
-                if v.get("lat") and v.get("lon"):
-                    folium.Marker(
-                        [v["lat"], v["lon"]],
-                        popup=v["name"],
-                        icon=folium.Icon(color="green", icon="plus-sign", prefix="glyphicon")
-                    ).add_to(m)
-        except:
-            pass
-    st_folium(m, width=None, height=450, use_container_width=True)
+        folium.Circle(
+            location=[st.session_state.map_lat, st.session_state.map_lon],
+            radius=5000,
+            color="#00F5FF",
+            fill=True,
+            fill_opacity=0.05,
+            popup="5km search radius"
+        ).add_to(m)
+
+    st_folium(m, width=None, height=500, use_container_width=True)
+
+    st.markdown("""
+    <div style="background:#1E1235;border:1px solid #2A1F4A;border-radius:12px;padding:12px 16px;
+                margin-top:8px;font-size:12px;color:#6050A0;text-align:center;">
+        🔴 Red = Rescue Report &nbsp;|&nbsp; 🟢 Green = Vet Hospital &nbsp;|&nbsp; 🔵 Blue circle = 5km radius
+    </div>
+    """, unsafe_allow_html=True)
 
 # ================================================================
 #  MISSING PET
